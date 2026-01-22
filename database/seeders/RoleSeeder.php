@@ -26,12 +26,11 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Create SuperAdmin role
-        $superAdmin = Role::create(['name' => 'SuperAdmin']);
-        $superAdmin->givePermissionTo([
+        $superAdmin = Role::firstOrCreate(['name' => 'SuperAdmin']);
+        $superAdmin->syncPermissions([
             'invite_admin',
             'invite_member',
             'view_all_short_urls',
@@ -39,57 +38,57 @@ class RoleSeeder extends Seeder
             'manage_users',
         ]);
 
-        // Create Admin role
-        $admin = Role::create(['name' => 'Admin']);
-        $admin->givePermissionTo([
+        $admin = Role::firstOrCreate(['name' => 'Admin']);
+        $admin->syncPermissions([
             'invite_member',
             'create_short_url',
             'view_company_short_urls',
             'manage_users',
         ]);
 
-        $member = Role::create(['name' => 'Member']);
-        $member->givePermissionTo([
+        $member = Role::firstOrCreate(['name' => 'Member']);
+        $member->syncPermissions([
             'create_short_url',
             'view_own_short_urls',
         ]);
 
-        // Create Sales role
-        $sales = Role::create(['name' => 'Sales']);
+        $sales = Role::firstOrCreate(['name' => 'Sales']);
+        $manager = Role::firstOrCreate(['name' => 'Manager']);
 
-        // Create Manager role
-        $manager = Role::create(['name' => 'Manager']);
-
-        \DB::statement("
-            INSERT INTO users (name, email, password, email_verified_at, created_at, updated_at)
-            VALUES ('Super Admin', 'superadmin@example.com', '" . bcrypt('Test@123') . "', NOW(), NOW(), NOW())
-        ");
-
-        $superAdminUser = User::where('email', 'superadmin@example.com')->first();
+        $superAdminUser = User::firstOrCreate(
+            ['email' => 'superadmin@example.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => bcrypt('Test@123'),
+                'email_verified_at' => now(),
+            ]
+        );
         $superAdminUser->assignRole('SuperAdmin');
 
-        // Create a default company
-        $company = Company::create([
+        $company = Company::firstOrCreate([
+            'domain' => 'test.com'
+        ], [
             'name' => 'Test Company',
-            'domain' => 'test.com',
         ]);
 
-        // Create Admin user
-        $adminUser = User::create([
-            'name' => 'Company Admin',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('Test@123'),
-            'company_id' => $company->id,
-        ]);
+        $adminUser = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Company Admin',
+                'password' => bcrypt('Test@123'),
+                'company_id' => $company->id,
+            ]
+        );
         $adminUser->assignRole('Admin');
 
-        // Create Member user
-        $memberUser = User::create([
-            'name' => 'Company Member',
-            'email' => 'member@example.com',
-            'password' => bcrypt('Test@123'),
-            'company_id' => $company->id,
-        ]);
+        $memberUser = User::firstOrCreate(
+            ['email' => 'member@example.com'],
+            [
+                'name' => 'Company Member',
+                'password' => bcrypt('Test@123'),
+                'company_id' => $company->id,
+            ]
+        );
         $memberUser->assignRole('Member');
     }
 }
